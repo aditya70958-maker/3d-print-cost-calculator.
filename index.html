@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Print Cost Calculator</title>
+
+  <style>
+    /* Page design */
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+      color: #1e293b;
+    }
+
+    /* Main calculator box */
+    .container {
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 24px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 15px #00000015;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2563eb;
+    }
+
+    p {
+      text-align: center;
+      color: #64748b;
+    }
+
+    /* Input labels and boxes */
+    label {
+      display: block;
+      margin-top: 16px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 22px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    /* Results area */
+    .results {
+      margin-top: 24px;
+      padding: 16px;
+      background: #eff6ff;
+      border-radius: 10px;
+    }
+
+    .results h2 {
+      margin-top: 0;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .selling-price {
+      color: #15803d;
+      font-size: 22px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>3D Print Cost Calculator</h1>
+    <p>Calculate your printing cost and selling price.</p>
+
+    <label for="grams">Filament used (grams)</label>
+    <input id="grams" type="number" min="0" step="any" value="80">
+
+    <label for="filamentPrice">Filament price per kg (₹)</label>
+    <input id="filamentPrice" type="number" min="0" step="any" value="1000">
+
+    <label for="hours">Printing time (hours)</label>
+    <input id="hours" type="number" min="0" step="any" value="4">
+
+    <label for="watts">Printer power (watts)</label>
+    <input id="watts" type="number" min="0" step="any" value="120">
+
+    <label for="electricityRate">Electricity price per kWh (₹)</label>
+    <input id="electricityRate" type="number" min="0" step="any" value="8">
+
+    <label for="otherCost">Other costs (₹)</label>
+    <input id="otherCost" type="number" min="0" step="any" value="10">
+
+    <label for="margin">Target profit margin (%)</label>
+    <input id="margin" type="number" min="0" max="99" step="any" value="30">
+
+    <button onclick="calculateCost()">Calculate Cost</button>
+
+    <div class="results" aria-live="polite">
+      <h2>Your Results</h2>
+
+      <div class="result-row">
+        <span>Filament cost</span>
+        <strong id="filamentResult">₹0.00</strong>
+      </div>
+
+      <div class="result-row">
+        <span>Electricity cost</span>
+        <strong id="electricityResult">₹0.00</strong>
+      </div>
+
+      <div class="result-row">
+        <span>Total cost</span>
+        <strong id="totalResult">₹0.00</strong>
+      </div>
+
+      <div class="result-row">
+        <span>Selling price</span>
+        <strong id="sellingResult" class="selling-price">₹0.00</strong>
+      </div>
+
+      <div class="result-row">
+        <span>Estimated profit</span>
+        <strong id="profitResult">₹0.00</strong>
+      </div>
+
+      <p id="message" role="status"></p>
+    </div>
+  </div>
+
+  <script>
+    function calculateCost() {
+      // Read the values entered by the user
+      const grams = Number(document.getElementById("grams").value);
+      const filamentPrice = Number(document.getElementById("filamentPrice").value);
+      const hours = Number(document.getElementById("hours").value);
+      const watts = Number(document.getElementById("watts").value);
+      const electricityRate = Number(document.getElementById("electricityRate").value);
+      const otherCost = Number(document.getElementById("otherCost").value);
+      const margin = Number(document.getElementById("margin").value);
+
+      // Check that all inputs are valid
+      const values = [
+        grams, filamentPrice, hours, watts,
+        electricityRate, otherCost, margin
+      ];
+
+      if (
+        values.some(value => !Number.isFinite(value)) ||
+        values.some(value => value < 0) ||
+        margin >= 100
+      ) {
+        document.getElementById("message").textContent =
+          "Please enter valid non-negative values. Margin must be below 100%.";
+        return;
+      }
+
+      // Calculate the filament cost
+      const filamentCost = (grams / 1000) * filamentPrice;
+
+      // Convert watt-hours into kilowatt-hours
+      const energyKWh = (watts * hours) / 1000;
+
+      // Calculate the electricity cost
+      const electricityCost = energyKWh * electricityRate;
+
+      // Calculate the total cost
+      const totalCost = filamentCost + electricityCost + otherCost;
+
+      // Calculate the selling price using profit margin
+      const sellingPrice = totalCost / (1 - margin / 100);
+
+      // Calculate the profit
+      const profit = sellingPrice - totalCost;
+
+      // Display the results in rupees
+      document.getElementById("filamentResult").textContent =
+        "₹" + filamentCost.toFixed(2);
+
+      document.getElementById("electricityResult").textContent =
+        "₹" + electricityCost.toFixed(2);
+
+      document.getElementById("totalResult").textContent =
+        "₹" + totalCost.toFixed(2);
+
+      document.getElementById("sellingResult").textContent =
+        "₹" + sellingPrice.toFixed(2);
+
+      document.getElementById("profitResult").textContent =
+        "₹" + profit.toFixed(2);
+
+      document.getElementById("message").textContent =
+        "Calculation completed successfully!";
+    }
+
+    // Calculate the default values when the page opens
+    calculateCost();
+  </script>
+</body>
+</html>
